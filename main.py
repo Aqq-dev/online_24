@@ -1,10 +1,18 @@
 import os
 import threading
 import time
+import logging
 from pypresence import Presence
 from flask import Flask
 from keep_alive import keep_alive
 import requests
+
+logging.basicConfig(
+    filename='bot.log',
+    filemode='a',
+    format='%(asctime)s %(levelname)s: %(message)s',
+    level=logging.INFO
+)
 
 TOKEN = os.getenv("TOKEN")
 
@@ -13,7 +21,11 @@ keep_alive()
 client_id = '1392336534992064675'
 
 rpc = Presence(client_id)
-rpc.connect()
+try:
+    rpc.connect()
+    logging.info("RPC connected successfully.")
+except Exception as e:
+    logging.error(f"Failed to connect RPC: {e}")
 
 def rich_presence_loop():
     while True:
@@ -34,9 +46,9 @@ def rich_presence_loop():
                     {"label": "GitHub", "url": "https://github.com/nexus-bot"}
                 ]
             )
-            print("Presence updated.")
+            logging.info("Presence updated.")
         except Exception as e:
-            print("RPC Error:", e)
+            logging.error(f"RPC Error: {e}")
         time.sleep(15)
 
 def set_online_status():
@@ -52,11 +64,14 @@ def set_online_status():
 
     while True:
         try:
-            requests.patch('https://discord.com/api/v9/users/@me/settings', headers=headers, json=json_data)
-            print("Online status updated.")
+            response = requests.patch('https://discord.com/api/v9/users/@me/settings', headers=headers, json=json_data)
+            if response.status_code == 200:
+                logging.info("Online status updated.")
+            else:
+                logging.warning(f"Failed to update online status. Status code: {response.status_code}, Response: {response.text}")
         except Exception as e:
-            print("Status update error:", e)
+            logging.error(f"Status update error: {e}")
         time.sleep(300)
-        
-threading.Thread(target=rich_presence_loop).start()
-threading.Thread(target=set_online_status).start()
+
+threading.Thread(target=rich_presence_loop, daemon=True).start()
+threading.Thread(target=set_online_status, daemon=True).start()
