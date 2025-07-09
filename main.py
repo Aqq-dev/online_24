@@ -10,7 +10,7 @@ TOKEN = os.getenv("TOKEN")
 
 keep_alive()
 
-client_id = '123456789012345678'
+client_id = '1392336534992064675'
 
 rpc = Presence(client_id)
 rpc.connect()
@@ -19,7 +19,7 @@ def rich_presence_loop():
     while True:
         try:
             rpc.update(
-                state="",
+                state="test",
                 details="Nexus bot",
                 large_image="_1_",
                 large_text="Aqq",
